@@ -1,0 +1,84 @@
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { createServerSupabase } from '@/lib/supabase/server';
+import DashboardStats from '@/components/ui/DashboardStats';
+import ProgressChart from '@/components/ui/ProgressChart';
+import KarmaDisplay from '@/components/ui/KarmaDisplay';
+
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    redirect('/auth/signin');
+  }
+
+  const supabase = createServerSupabase();
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  const { data: feedback } = await supabase
+    .from('solution_feedback')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('updated_at', { ascending: false });
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-2">Municipal Dashboard</h1>
+      <p className="text-slate-500 mb-6">
+        {profile?.city ? `${profile.city} City Official` : 'Community Member'} — track solutions
+        your city is implementing.
+      </p>
+
+      <div className="mb-8">
+        <KarmaDisplay />
+      </div>
+
+      <DashboardStats feedback={feedback ?? []} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <ProgressChart feedback={feedback ?? []} />
+        <div className="card">
+          <h3 className="font-semibold text-lg mb-4">City Actions</h3>
+          {feedback && feedback.length > 0 ? (
+            <ul className="space-y-3">
+              {feedback.slice(0, 10).map((f) => (
+                <li key={f.id} className="flex items-start justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{f.solution_id}</p>
+                    {f.notes && (
+                      <p className="text-slate-500 text-xs truncate">{f.notes}</p>
+                    )}
+                  </div>
+                  <span
+                    className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
+                      f.status === 'completed'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : f.status === 'in_progress'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {f.status.replace('_', ' ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-slate-500 text-sm">
+              No tracked solutions yet. Browse solutions and click “Track This Solution” to
+              start.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

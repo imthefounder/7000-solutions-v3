@@ -1,0 +1,84 @@
+# 7000 Solutions Platform v3.0
+
+An AI-powered platform with **7,000+ solutions to world issues** — semantic search, municipal dashboards, feedback tracking, a Watch-Build-Teach karma system, city filtering (Detroit & St. Louis pilots), and offline PWA support.
+
+## Tech Stack
+
+- **Next.js 14** (App Router, Server Components)
+- **Supabase** (Postgres + pgvector + PostGIS + Auth)
+- **OpenAI** embeddings for semantic search
+- **NextAuth** (credentials provider backed by Supabase Auth)
+- **Tailwind CSS**, **Recharts**, **jsPDF**
+
+## Getting Started
+
+### 1. Create the Supabase backend
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor** and run everything in `supabase/migrations/001_initial_schema.sql` (tables, RLS, functions, triggers).
+3. Enable **Email/Password** auth in Authentication → Providers.
+4. Create a test user in Authentication → Users (the trigger auto-creates their profile row).
+5. Seed data: copy `.env.example` to `.env.local`, fill in your project URL + anon key + service role key, then run `node scripts/seed.js` (adds 20 starter solutions; extend to 7,000 via your content pipeline).
+6. *(Optional, for semantic search)* set `OPENAI_API_KEY`. Without it, search falls back to keyword matching.
+
+### 2. Local development
+
+```bash
+npm install
+npm run dev
+# open http://localhost:3000
+```
+
+### 3. Deploy to Vercel
+
+1. Push this repo to GitHub.
+2. In Vercel: **Add New Project → Import** the repo. Framework auto-detects **Next.js**.
+3. Add environment variables (Settings → Environment Variables):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `OPENAI_API_KEY` (optional)
+   - `NEXTAUTH_SECRET` (run `openssl rand -base64 32`)
+   - `NEXTAUTH_URL` → your production URL
+   - `NEXT_PUBLIC_PILOT_CITIES` → `Detroit,St. Louis`
+4. Deploy. Done — the app is live.
+
+## Project Structure
+
+```
+src/
+  app/
+    page.tsx                  # Home
+    browse/page.tsx           # Semantic + keyword search, category & city filters
+    solution/[id]/page.tsx    # Solution detail + feedback + teaching
+    dashboard/page.tsx        # Municipal dashboard (protected)
+    whitepaper/page.tsx       # Whitepaper + PDF download
+    auth/signin|signout/      # Auth pages
+    api/
+      auth/[...nextauth]/     # NextAuth (Supabase credentials)
+      embeddings/             # OpenAI embeddings proxy
+      solutions/              # Public solutions API
+      feedback/               # Server-side feedback writes
+  components/
+    layout/  (Header, Footer)
+    ui/      (SearchBar, CategoryFilter, SolutionCard, FeedbackForm,
+              TeachingForm, KarmaDisplay, DashboardStats, ProgressChart,
+              WhitepaperDownload)
+    auth/    (AuthGuard)
+  lib/
+    supabase/ (client, server)
+    pdfGenerator.ts
+  types/
+supabase/migrations/001_initial_schema.sql
+scripts/seed.js
+public/  (manifest.json, sw.js — PWA offline support)
+```
+
+## Key Features
+
+- **Semantic search** — natural-language queries ranked by meaning (pgvector + OpenAI).
+- **City pilot filter** — Detroit / St. Louis / national solutions via header switcher.
+- **Municipal dashboard** — track planned / in-progress / completed solutions with charts.
+- **Watch-Build-Teach** — log teaching sessions, earn **+5 karma** per session.
+- **Feedback loop** — residents report implementation status; cities see it live.
+- **PWA offline** — installable, caches static assets for offline browsing.
