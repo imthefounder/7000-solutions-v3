@@ -35,7 +35,7 @@ AS $$
 BEGIN
   INSERT INTO public.profiles (id, email)
   VALUES (gen_random_uuid(), lower(target_email))
-  ON CONFLICT (email) DO NOTHING;
+  ON CONFLICT ON CONSTRAINT profiles_email_key DO NOTHING;
   RETURN QUERY
   SELECT p.id, p.email
   FROM public.profiles p
