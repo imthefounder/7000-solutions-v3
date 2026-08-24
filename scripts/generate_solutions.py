@@ -286,11 +286,13 @@ def main():
         failures = 0
         sprint = f'S{(batch_no % 4) + 1}'
         rows = []
+        # ~30% of each batch is national (city = NULL); rest get the focus city
+        national_from = int(len(items) * 0.7)
         for idx, it in enumerate(items):
-            if idx < 14:
-                city = city_focus
-            else:
+            if idx >= national_from:
                 city = None  # national
+            else:
+                city = city_focus
             rows.append((it['title'], it['description'], it['ai_usage'],
                          it['impact'], it['category'], sprint, city))
 
