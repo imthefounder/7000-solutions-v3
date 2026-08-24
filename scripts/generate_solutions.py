@@ -63,8 +63,8 @@ TASK: Generate exactly {count} NEW, distinct solutions for {city} and national p
 
 RULES:
 - title: short, concrete, name-like (max 8 words). Never repeat titles from the example: Community AI Literacy Hubs, Youth Coding Corps, Mobile Health Kiosks, Smart Streetlight Network, Vacant Lot Rewilding Program, Fair Fares Transit Card, Neighborhood Business Accelerator, Adaptive Reuse Housing Fund, Free Community Wi-Fi Mesh, Urban Food Oasis Network, City Youth Councils, Age-Friendly Concierge Line, Teacher AI Co-Pilot, Resilience Corps, Community Responder Units, School-Based Mental Health, Complete Streets Pilot, Buy Local Procurement Portal, Device Lending Library, Landlord Repair Accelerator, Food Rescue Dispatch.
-- description: 2-3 sentences, specific and credible (who, what, where, how it starts), no marketing fluff.
-- ai_usage: 1 sentence on how AI is used (can be modest — data analysis, matching, prediction).
+- description: 1-2 sentences, concrete (who, what, where), no marketing fluff.
+- ai_usage: 1 short sentence on how AI is used.
 - impact: exactly 2 short measurable strings like "+40% digital skills" or "500 residents per hub/year".
 - Mix scopes: some neighborhood-level, some citywide, some regional.
 - Never invent stats that look official; use realistic orders of magnitude.
@@ -164,35 +164,60 @@ def main():
     if '--target' in sys.argv:
         target = int(sys.argv[sys.argv.index('--target') + 1])
 
+    # Worker mode: --model picks a Groq model (each has its own 8k token/min
+    # bucket, so parallel workers across models multiply throughput) and
+    # --categories restricts this worker to a subset of categories.
+    global GROQ_MODEL
+    if '--model' in sys.argv:
+        GROQ_MODEL = sys.argv[sys.argv.index('--model') + 1]
+    if '--categories' in sys.argv:
+        cats = [c.strip() for c in sys.argv[sys.argv.index('--categories') + 1].split(',')]
+    else:
+        cats = CATEGORIES
+
     conn = psycopg2.connect(**DB_DSN)
     conn.autocommit = True
     cur = conn.cursor()
 
     cur.execute('SELECT count(*) FROM solutions')
     total = cur.fetchone()[0]
-    print(f'starting count: {total}', flush=True)
+    print(f'[{GROQ_MODEL}] starting count: {total} (categories: {len(cats)})', flush=True)
+
+    # Each worker fills its own category share (~583 per category)
+    per_cat = target // len(CATEGORIES)
+    worker_target = per_cat * len(cats)
+    cat_placeholders = ','.join(['%s'] * len(cats))
 
     provider = 'groq' if os.environ.get('GROQ_API_KEY') else 'deepseek'
     failures = 0
     batch_no = 0
 
     while total < target:
-        category = CATEGORIES[batch_no % len(CATEGORIES)]
-        # Alternate city focus per batch; the index-mapping below fixes the mix
-        city_focus = 'Detroit' if (batch_no // len(CATEGORIES)) % 2 == 0 else 'St. Louis'
+        cur.execute(
+            f"SELECT count(*) FROM solutions WHERE category IN ({cat_placeholders})",
+            cats)
+        cat_total = cur.fetchone()[0]
+        if cat_total >= worker_target:
+            print(f'[{GROQ_MODEL}] category share reached ({cat_total} >= {worker_target}), '
+                  f'global {total}', flush=True)
+            break
+
+        category = cats[batch_no % len(cats)]
+        # Alternate city focus per cycle; the index-mapping below fixes the mix
+        city_focus = 'Detroit' if (batch_no // len(cats)) % 2 == 0 else 'St. Louis'
 
         try:
             items = generate_batch(category, city_focus, BATCH, provider)
         except RuntimeError as e:
             failures += 1
-            print(f'[fail] {category} ({city_focus}): {e}', flush=True)
+            print(f'[{GROQ_MODEL}] [fail] {category} ({city_focus}): {e}', flush=True)
             if failures >= 5 and provider == 'groq' and os.environ.get('DEEPSEEK_API_KEY'):
                 provider = 'deepseek'
-                print('switching provider to deepseek', flush=True)
+                print(f'[{GROQ_MODEL}] switching provider to deepseek', flush=True)
                 failures = 0
                 continue
             if failures >= 8:
-                print('too many failures, aborting', flush=True)
+                print(f'[{GROQ_MODEL}] too many failures, aborting', flush=True)
                 break
             time.sleep(20)
             continue
@@ -219,15 +244,12 @@ def main():
         total = cur.fetchone()[0]
         batch_no += 1
         if batch_no % 10 == 0 or total >= target:
-            print(f'[batch {batch_no}] {category} {city_focus} sprint {sprint} '
-                  f'-> total {total}', flush=True)
+            print(f'[{GROQ_MODEL}] [batch {batch_no}] {category} {city_focus} '
+                  f'sprint {sprint} -> total {total}', flush=True)
+        # Smooth pacing inside the per-model 8k token/min bucket
+        time.sleep(3)
 
-    print(f'DONE: solutions in DB = {total}', flush=True)
-    cur.execute(
-        "SELECT category, city, count(*) FROM solutions GROUP BY 1, 2 "
-        "ORDER BY 1, 2")
-    for row in cur.fetchall():
-        print(f'  {row[0]:<22} {str(row[1]):<10} {row[2]}', flush=True)
+    print(f'[{GROQ_MODEL}] DONE: solutions in DB = {total}', flush=True)
     conn.close()
 
 
