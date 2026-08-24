@@ -164,7 +164,7 @@ def extract_json_array(text):
     raise ValueError('unbalanced array in response')
 
 
-def generate_batch(category, city, count, provider, retries=4):
+def generate_batch(category, city, count, provider, retries=6):
     prompt = PROMPT_TEMPLATE.format(
         city=city, CITY_CONTEXT=CITY_CONTEXT.get(city, ''),
         category=category, category_desc=CATEGORY_CONTEXT.get(category, ''),
@@ -193,14 +193,28 @@ def generate_batch(category, city, count, provider, retries=4):
                     'impact': [str(x)[:100] for x in (it.get('impact') or [])][:2],
                     'category': category,
                 })
-            if len(out) < max(8, count - 6):
+            if len(out) < max(6, count - 5):
                 raise ValueError(f'only {len(out)} valid items')
             return out
-        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, KeyError) as e:
+        except urllib.error.HTTPError as e:
             last_err = e
-            time.sleep(4 + attempt * 4)
-            if isinstance(e, urllib.error.HTTPError) and e.code == 429:
-                time.sleep(15)
+            if e.code == 429:
+                # Cloudflare/Groq request throttle — honor retry-after
+                wait = 60
+                ra = e.headers.get('Retry-After') or e.headers.get('retry-after')
+                if ra:
+                    try:
+                        wait = int(ra) + 5
+                    except ValueError:
+                        pass
+                wait = min(wait, 300)
+                print(f'    429 — sleeping {wait}s', flush=True)
+                time.sleep(wait)
+            else:
+                time.sleep(8 + attempt * 6)
+        except (urllib.error.URLError, ValueError, KeyError) as e:
+            last_err = e
+            time.sleep(8 + attempt * 6)
     raise RuntimeError(f'batch failed after retries: {last_err}')
 
 
@@ -291,8 +305,8 @@ def main():
         if batch_no % 10 == 0 or total >= target:
             print(f'[{GROQ_MODEL}] [batch {batch_no}] {category} {city_focus} '
                   f'sprint {sprint} -> total {total}', flush=True)
-        # Smooth pacing inside the per-model token bucket
-        time.sleep(6)
+        # Pacing: stay under Cloudflare's per-minute request throttle
+        time.sleep(25)
 
     print(f'[{GROQ_MODEL}] DONE: solutions in DB = {total}', flush=True)
     conn.close()
