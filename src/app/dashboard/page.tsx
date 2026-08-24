@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
@@ -8,25 +8,49 @@ import KarmaDisplay from '@/components/ui/KarmaDisplay';
 
 export const dynamic = 'force-dynamic';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
+  const cookieStore = cookies();
+  const visitorId = cookieStore.get('visitor_id')?.value ?? '';
 
-  if (!session?.user?.id) {
-    redirect('/auth/signin');
-  }
+  // Signed-in users see their own data; anonymous visitors see the data
+  // attached to their browser's visitor id (prototype mode).
+  const userId =
+    session?.user?.id ?? (UUID_RE.test(visitorId) ? visitorId.toLowerCase() : null);
 
   const supabase = createServiceRoleClient();
+
+  if (!userId) {
+    // Fresh browser with no visitor id yet — the client Providers component
+    // creates one on first render, then a reload shows this user's data.
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-2">Municipal Dashboard</h1>
+        <p className="text-slate-500 mb-6">
+          Track solutions your city is implementing. Your progress is saved on this
+          device — reload after the page finishes loading to see your dashboard.
+        </p>
+        <div className="card p-8 text-center">
+          <p className="text-slate-500">
+            Start by browsing solutions and clicking “Track This Solution”.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', userId)
     .maybeSingle();
 
   const { data: feedback } = await supabase
     .from('solution_feedback')
     .select('*')
-    .eq('user_id', session.user.id)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false });
 
   return (

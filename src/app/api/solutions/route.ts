@@ -8,12 +8,14 @@ export const dynamic = 'force-dynamic';
 //   ?city=Detroit
 //   ?q=keyword
 //   ?limit=50
+//   ?offset=0
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category');
   const city = searchParams.get('city');
   const q = searchParams.get('q');
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10) || 50, 100);
+  const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10) || 0, 0);
 
   const supabase = createServerSupabase();
   let query = supabase.from('solutions').select('*');
@@ -24,11 +26,11 @@ export async function GET(request: Request) {
 
   const { data, error } = await query
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data, count: data?.length ?? 0 });
+  return NextResponse.json({ data, count: data?.length ?? 0, offset, limit });
 }

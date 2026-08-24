@@ -14,6 +14,8 @@ const CATEGORIES = [
   'Aging', 'Arts & Culture',
 ];
 
+const PAGE_SIZE = 50;
+
 function BrowseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,6 +32,7 @@ function BrowseContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<'keyword' | 'semantic'>('keyword');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const fetchSolutions = useCallback(async () => {
     setLoading(true);
@@ -87,7 +90,7 @@ function BrowseContent() {
 
     const { data, error: dbError } = await supabaseQuery
       .order('created_at', { ascending: false })
-      .limit(50);
+      .range(0, visibleCount - 1);
 
     if (dbError) {
       setError(dbError.message);
@@ -97,7 +100,7 @@ function BrowseContent() {
     }
     setSearchMode('keyword');
     setLoading(false);
-  }, [query, category, city, supabase]);
+  }, [query, category, city, supabase, visibleCount]);
 
   useEffect(() => {
     fetchSolutions();
@@ -179,6 +182,20 @@ function BrowseContent() {
         <div className="text-center py-16 text-slate-500">
           <p className="text-lg mb-2">No solutions found.</p>
           <p>Try a different search, or clear filters to see everything.</p>
+        </div>
+      )}
+
+      {!loading && !error && solutions.length > 0 && searchMode === 'keyword' && (
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
+            className="px-6 py-3 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium hover:border-primary hover:text-primary transition-colors"
+          >
+            Load More ({solutions.length} shown)
+          </button>
+          <p className="text-xs text-slate-400 mt-2">
+            Showing {solutions.length} of the full catalog — load more to keep browsing.
+          </p>
         </div>
       )}
     </div>

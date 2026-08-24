@@ -2,28 +2,34 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { createClient } from '@/lib/supabase/client';
 import { Award } from 'lucide-react';
+import { getVisitorId } from '@/lib/anon';
 
 export default function KarmaDisplay() {
   const { data: session } = useSession();
-  const supabase = createClient();
   const [karma, setKarma] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    let cancelled = false;
+    const userId = session?.user?.id ?? getVisitorId();
+    if (!userId) {
+      setKarma(0);
+      return;
+    }
 
-    supabase
-      .from('profiles')
-      .select('karma_balance')
-      .eq('id', session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setKarma(data.karma_balance ?? 0);
+    fetch(`/api/karma?user_id=${encodeURIComponent(userId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setKarma(d.karma_balance ?? 0);
+      })
+      .catch(() => {
+        if (!cancelled) setKarma(0);
       });
-  }, [session?.user?.id, supabase]);
 
-  if (!session) return null;
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
 
   return (
     <div className="card flex items-center gap-3">
