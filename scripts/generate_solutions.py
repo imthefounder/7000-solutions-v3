@@ -124,14 +124,40 @@ def call_llm(prompt, provider):
 
 
 def extract_json_array(text):
+    # Strip markdown fences if present
+    text = text.strip()
+    if text.startswith('```'):
+        text = text.split('\n', 1)[-1]
+        if text.endswith('```'):
+            text = text[:-3]
+    # Try a direct parse first
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, list):
+            return parsed
+    except (ValueError, TypeError):
+        pass
     start = text.find('[')
     if start == -1:
         raise ValueError('no array in response')
     depth = 0
+    in_str = False
+    esc = False
     for i in range(start, len(text)):
-        if text[i] == '[':
+        ch = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == '\\':
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == '[':
             depth += 1
-        elif text[i] == ']':
+        elif ch == ']':
             depth -= 1
             if depth == 0:
                 return json.loads(text[start:i + 1])
