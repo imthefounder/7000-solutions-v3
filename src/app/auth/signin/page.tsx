@@ -1,48 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Show ?error=CredentialsSignin from a full-page redirect after a failed post
+  useEffect(() => {
+    const e = new URLSearchParams(window.location.search).get('error');
+    if (e) setError('Invalid email or password. Please try again.');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const result = await signIn('supabase', {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (result?.error) {
-      setLoading(false);
-      setError('Invalid email or password. Please try again.');
-      return;
-    }
-
-    // Also establish the Supabase browser session so RLS-backed queries
-    // (feedback, teaching, karma, dashboard) see auth.uid() = the user.
+    // 1. Establish the Supabase browser session first (document.cookie based,
+    //    survives the navigation below). RLS-backed client features
+    //    (feedback, teaching, karma) depend on this cookie.
     try {
       const supabase = createClient();
       await supabase.auth.signInWithPassword({ email, password });
     } catch {
-      // Non-fatal: NextAuth session is already established; RLS features
-      // simply degrade until the user re-signs-in.
+      // Ignore — the NextAuth form post below surfaces invalid credentials.
     }
 
-    setLoading(false);
-    router.push('/dashboard');
-    router.refresh();
+    // 2. Classic full-page form post: the browser applies the NextAuth
+    //    session cookie from the navigation response, then redirects to the
+    //    dashboard. Most robust across browsers (no fetch-cookie edge cases).
+    await signIn('supabase', {
+      email,
+      password,
+      callbackUrl: '/dashboard',
+    });
   };
 
   return (
