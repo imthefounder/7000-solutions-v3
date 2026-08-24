@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { createServerSupabase } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import DashboardStats from '@/components/ui/DashboardStats';
 import ProgressChart from '@/components/ui/ProgressChart';
 import KarmaDisplay from '@/components/ui/KarmaDisplay';
@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     redirect('/auth/signin');
   }
 
-  const supabase = createServerSupabase();
+  const supabase = createServiceRoleClient();
 
   const { data: profile } = await supabase
     .from('profiles')
