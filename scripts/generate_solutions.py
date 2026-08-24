@@ -53,12 +53,29 @@ GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
 DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
 DEEPSEEK_MODEL = 'deepseek-chat'
 
+CATEGORY_CONTEXT = {
+    'Education': 'schooling, teachers, students, digital literacy, workforce readiness, after-school and adult learning',
+    'Healthcare': 'access to care, mental health, prevention, telehealth, community clinics, chronic disease',
+    'Public Safety': 'community policing, emergency response, violence prevention, safer streets, 911 alternatives',
+    'Environment': 'climate resilience, green space, energy, waste, water quality, air quality, urban nature',
+    'Transportation': 'transit, mobility, walkability, bike infrastructure, first/last mile, road safety',
+    'Economic Development': 'small business, jobs, workforce, entrepreneurship, local procurement, downtown vitality',
+    'Housing': 'affordability, vacancy, home repair, homelessness, tenant rights, land use, eviction prevention',
+    'Digital Equity': 'internet access, devices, digital skills, online inclusion, tech support',
+    'Food Security': 'food access, hunger, urban agriculture, food waste, nutrition, food deserts',
+    'Youth': 'young people, teens, education-to-work, engagement, recreation, mentoring',
+    'Aging': 'older adults, senior health, social isolation, mobility, benefits navigation, elder care',
+    'Arts & Culture': 'arts, culture, heritage, creative economy, public art, venues, cultural programming',
+}
+
 PROMPT_TEMPLATE = """You are a civic innovation strategist writing the "7000 Solutions" catalog: actionable, realistic, city-scale solutions to world issues.
+
+DOMAIN — {category}: {category_desc}.
 
 CONTEXT — {city}:
 {CITY_CONTEXT}
 
-TASK: Generate exactly {count} NEW, distinct solutions for {city} and national programs. Output ONLY a JSON array of {count} objects, no prose, no markdown:
+TASK: Generate exactly {count} NEW, distinct solutions in the {category} domain for {city} and national programs. Every solution MUST clearly belong to the {category} domain. Output ONLY a JSON array of {count} objects, no prose, no markdown:
 [{{"title": "...", "description": "...", "ai_usage": "...", "impact": ["...", "..."]}}, ...]
 
 RULES:
@@ -123,7 +140,9 @@ def extract_json_array(text):
 
 def generate_batch(category, city, count, provider, retries=4):
     prompt = PROMPT_TEMPLATE.format(
-        city=city, CITY_CONTEXT=CITY_CONTEXT.get(city, ''), count=count)
+        city=city, CITY_CONTEXT=CITY_CONTEXT.get(city, ''),
+        category=category, category_desc=CATEGORY_CONTEXT.get(category, ''),
+        count=count)
     last_err = None
     for attempt in range(retries):
         try:
