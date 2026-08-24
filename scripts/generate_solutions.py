@@ -179,6 +179,8 @@ def generate_batch(category, city, count, provider, retries=6):
             out = []
             seen = set()
             for it in items:
+                if not isinstance(it, dict):
+                    continue
                 t = str(it.get('title', '')).strip()
                 if not t or t in seen:
                     continue
@@ -212,7 +214,7 @@ def generate_batch(category, city, count, provider, retries=6):
                 time.sleep(wait)
             else:
                 time.sleep(8 + attempt * 6)
-        except (urllib.error.URLError, ValueError, KeyError) as e:
+        except (urllib.error.URLError, ValueError, KeyError, AttributeError, TypeError) as e:
             last_err = e
             time.sleep(8 + attempt * 6)
     raise RuntimeError(f'batch failed after retries: {last_err}')
