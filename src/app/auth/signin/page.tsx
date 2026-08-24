@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -23,14 +24,25 @@ export default function SignInPage() {
       redirect: false,
     });
 
-    setLoading(false);
-
     if (result?.error) {
+      setLoading(false);
       setError('Invalid email or password. Please try again.');
-    } else {
-      router.push('/dashboard');
-      router.refresh();
+      return;
     }
+
+    // Also establish the Supabase browser session so RLS-backed queries
+    // (feedback, teaching, karma, dashboard) see auth.uid() = the user.
+    try {
+      const supabase = createClient();
+      await supabase.auth.signInWithPassword({ email, password });
+    } catch {
+      // Non-fatal: NextAuth session is already established; RLS features
+      // simply degrade until the user re-signs-in.
+    }
+
+    setLoading(false);
+    router.push('/dashboard');
+    router.refresh();
   };
 
   return (
