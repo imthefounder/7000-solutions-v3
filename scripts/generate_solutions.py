@@ -47,7 +47,7 @@ CITY_CONTEXT = {
         'collaborative, and locally grounded.'),
 }
 
-BATCH = 20  # solutions per API call
+BATCH = 12  # solutions per API call (smaller batches stay under the 8k token/min bucket)
 GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
 DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions'
@@ -291,8 +291,8 @@ def main():
         if batch_no % 10 == 0 or total >= target:
             print(f'[{GROQ_MODEL}] [batch {batch_no}] {category} {city_focus} '
                   f'sprint {sprint} -> total {total}', flush=True)
-        # Smooth pacing inside the per-model 8k token/min bucket
-        time.sleep(3)
+        # Smooth pacing inside the per-model token bucket
+        time.sleep(6)
 
     print(f'[{GROQ_MODEL}] DONE: solutions in DB = {total}', flush=True)
     conn.close()
