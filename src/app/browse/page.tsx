@@ -58,7 +58,7 @@ function BrowseContent() {
 
       let supabaseQuery = supabase
         .from('solutions')
-        .select('*, solution_guides!left(id)', { count: 'exact' });
+        .select('*', { count: 'exact' });
 
       if (category) supabaseQuery = supabaseQuery.eq('category', category);
       if (city && city !== 'all') supabaseQuery = supabaseQuery.eq('city', city);
@@ -114,13 +114,23 @@ function BrowseContent() {
       else if (sort === 'sprint') ordered = ordered.order('sprint', { ascending: true });
       else ordered = ordered.order('title', { ascending: true });
 
+      // Guide-ready flags — two-query pattern (embed syntax is unreliable)
+      let guideIds = new Set<string>();
+      if (!append) {
+        const { data: guideRows } = await supabase.from('solution_guides').select('solution_id');
+        guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
+      }
+
       const { data, error: dbError, count } = await ordered.range(from, from + (append ? PAGE_SIZE : visibleCount) - 1);
 
       if (dbError) {
         setError(dbError.message);
         if (!append) setSolutions([]);
       } else {
-        const rows = ((data as any[]) ?? []).map(toSolution);
+        const rows = ((data as any[]) ?? []).map((r: any) => ({
+          ...toSolution(r),
+          hasGuide: guideIds.has(r.id),
+        }));
         setSolutions((prev) => (append ? [...prev, ...rows] : rows));
         if (count !== null) setTotal(count);
       }

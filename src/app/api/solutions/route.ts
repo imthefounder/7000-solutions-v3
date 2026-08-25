@@ -18,9 +18,7 @@ export async function GET(request: Request) {
   const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10) || 0, 0);
 
   const supabase = createServerSupabase();
-  let query = supabase
-    .from('solutions')
-    .select('*, solution_guides!left(id)', { count: 'exact' });
+  let query = supabase.from('solutions').select('*', { count: 'exact' });
 
   if (category) query = query.eq('category', category);
   if (city) query = query.eq('city', city);
@@ -34,10 +32,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const rows = (data ?? []).map((r: any) => ({
+  // Guide-ready flags (two-query pattern — embed syntax is unreliable here)
+  const { data: guideRows } = await supabase.from('solution_guides').select('solution_id');
+  const guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
+
+  const rows = (data ?? []).map((r: Record<string, unknown>) => ({
     ...r,
-    hasGuide: Array.isArray(r.solution_guides) && r.solution_guides.length > 0,
-    solution_guides: undefined,
+    hasGuide: guideIds.has(r.id as string),
   }));
 
   return NextResponse.json({ data: rows, count: count ?? rows.length, offset, limit });
