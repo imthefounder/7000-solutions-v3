@@ -8,6 +8,7 @@
 
 # next.js
 /.next/
+/.next_stuck_build/
 /out/
 
 # production

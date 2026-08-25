@@ -9,6 +9,7 @@ export type Solution = {
   impact: string[];
   city: string | null;
   similarity?: number;
+  hasGuide?: boolean;
 };
 
 export type GuideStep = {

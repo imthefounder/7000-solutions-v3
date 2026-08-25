@@ -22,11 +22,15 @@ export const metadata: Metadata = {
     description:
       '7,000+ open, actionable solutions to world issues — each with a step-by-step build guide. Built for citizens, cities, and developers.',
     type: 'website',
+    url: 'https://7000-solutions-v3.vercel.app',
+    siteName: '7000 Solutions',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: '7000 Solutions — 7,000+ open solutions to world issues' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: '7000 Solutions',
     description: '7,000+ open solutions to world issues, ready to build.',
+    images: ['/og.png'],
   },
   appleWebApp: {
     capable: true,

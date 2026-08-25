@@ -30,26 +30,32 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card !p-4 flex items-center gap-3">
-          <Clock className="w-5 h-5 text-primary shrink-0" />
-          <div>
+          <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+            <Clock className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
             <p className="text-xs text-slate-500">Timeline</p>
-            <p className="font-medium text-sm">{guide.timeline ?? 'Not yet estimated'}</p>
+            <p className="font-medium text-sm truncate">{guide.timeline ?? 'Not yet estimated'}</p>
           </div>
         </div>
         <div className="card !p-4 flex items-center gap-3">
-          <DollarSign className="w-5 h-5 text-primary shrink-0" />
-          <div>
+          <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+            <DollarSign className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
             <p className="text-xs text-slate-500">Estimated Cost</p>
-            <p className="font-medium text-sm">{guide.estimated_cost ?? 'Not yet estimated'}</p>
+            <p className="font-medium text-sm truncate">{guide.estimated_cost ?? 'Not yet estimated'}</p>
           </div>
         </div>
         <div className="card !p-4 flex items-center gap-3">
-          <Building2 className="w-5 h-5 text-primary shrink-0" />
-          <div>
+          <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
             <p className="text-xs text-slate-500">Key Partners</p>
-            <p className="font-medium text-sm">
+            <p className="font-medium text-sm truncate">
               {guide.partners && guide.partners.length > 0
-                ? guide.partners.slice(0, 2).join(', ')
+                ? `${guide.partners.length} partner${guide.partners.length === 1 ? '' : 's'}`
                 : 'Community-led'}
             </p>
           </div>
@@ -57,16 +63,20 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
       </div>
 
       <div>
-        <h2 className="font-semibold text-xl mb-4 flex items-center gap-2">
+        <h2 className="font-semibold text-xl mb-5 flex items-center gap-2">
           <Compass className="w-5 h-5 text-primary" /> Step-by-Step Build Guide
         </h2>
-        <ol className="space-y-4">
+        <ol className="relative space-y-5">
+          <div
+            className="absolute left-[17px] top-3 bottom-3 w-px bg-gradient-to-b from-teal-500/50 via-teal-400/30 to-transparent"
+            aria-hidden="true"
+          />
           {guide.steps.map((step, idx) => (
-            <li key={idx} className="card !p-5 flex gap-4">
-              <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary text-white font-bold flex items-center justify-center text-sm shadow-md">
+            <li key={idx} className="relative flex gap-4">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-teal-600 to-cyan-500 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-teal-500/25 ring-4 ring-white z-10">
                 {idx + 1}
               </div>
-              <div className="min-w-0">
+              <div className="card flex-1 !p-5">
                 <h3 className="font-semibold mb-1">{step.title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">{step.detail}</p>
               </div>
@@ -74,6 +84,21 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
           ))}
         </ol>
       </div>
+
+      {guide.partners && guide.partners.length > 0 && (
+        <div className="card !p-5">
+          <p className="text-xs text-slate-500 mb-2.5 flex items-center gap-1.5 uppercase tracking-wide font-semibold">
+            <Building2 className="w-4 h-4 text-primary" /> Key Partners
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {guide.partners.map((p) => (
+              <span key={p} className="chip !py-1.5 text-xs">
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -165,19 +190,30 @@ export default async function SolutionPage({ params }: { params: { id: string } 
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center gap-2 text-sm flex-wrap">
-        <span className="inline-block bg-teal-50 text-primary font-semibold px-2.5 py-1 rounded-full border border-teal-100">
+    <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
+      <nav className="text-sm text-slate-400 mb-5 flex items-center gap-1.5 flex-wrap" aria-label="Breadcrumb">
+        <Link href="/browse" className="hover:text-primary transition-colors">
+          Browse
+        </Link>
+        <span aria-hidden="true">/</span>
+        <Link
+          href={`/browse?category=${encodeURIComponent(s.category)}`}
+          className="hover:text-primary transition-colors"
+        >
           {s.category}
-        </span>
-        <span className="inline-block bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-          Sprint {s.sprint}
-        </span>
+        </Link>
         {s.city && (
-          <span className="inline-block bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-            {s.city}
-          </span>
+          <>
+            <span aria-hidden="true">/</span>
+            <span className="text-slate-500">{s.city}</span>
+          </>
         )}
+      </nav>
+
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
+        <span className="badge badge-teal">{s.category}</span>
+        <span className="badge">Sprint {s.sprint}</span>
+        {s.city && <span className="badge">{s.city}</span>}
         <div className="ml-auto">
           <ShareButton title={s.title} />
         </div>

@@ -18,13 +18,15 @@ export async function GET(request: Request) {
   const offset = Math.max(parseInt(searchParams.get('offset') ?? '0', 10) || 0, 0);
 
   const supabase = createServerSupabase();
-  let query = supabase.from('solutions').select('*');
+  let query = supabase
+    .from('solutions')
+    .select('*, solution_guides!left(id)', { count: 'exact' });
 
   if (category) query = query.eq('category', category);
   if (city) query = query.eq('city', city);
   if (q) query = query.ilike('title', `%${q}%`);
 
-  const { data, error } = await query
+  const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -32,5 +34,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data, count: data?.length ?? 0, offset, limit });
+  const rows = (data ?? []).map((r: any) => ({
+    ...r,
+    hasGuide: Array.isArray(r.solution_guides) && r.solution_guides.length > 0,
+    solution_guides: undefined,
+  }));
+
+  return NextResponse.json({ data: rows, count: count ?? rows.length, offset, limit });
 }

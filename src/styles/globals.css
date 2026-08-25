@@ -6,10 +6,34 @@
   :root {
     --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    /* Brand — single teal accent family (Clean Chaos: ONE chromatic accent) */
+    --teal-50: #f0fdfa;
+    --teal-100: #ccfbf1;
+    --teal-500: #14b8a6;
+    --teal-600: #0d9488;
+    --teal-700: #0f766e;
+    --teal-900: #134e4a;
+
+    /* Elevation */
+    --shadow-soft: 0 8px 32px rgba(15, 23, 42, 0.08);
+    --shadow-lift: 0 16px 44px rgba(15, 23, 42, 0.14);
+    --shadow-glow: 0 6px 24px rgba(13, 148, 136, 0.35);
+
+    /* Motion */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 150ms;
+    --dur-base: 250ms;
+    --dur-slow: 500ms;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: var(--font-body);
     /* Soft ambient color fields so glass panels have something to refract */
     background-image:
       radial-gradient(1100px 520px at 8% -8%, rgba(15, 118, 110, 0.10), transparent 62%),
@@ -23,10 +47,25 @@
     letter-spacing: -0.02em;
   }
 
+  ::selection {
+    background: rgba(13, 148, 136, 0.22);
+  }
+
   :focus-visible {
     outline: 2px solid #0f766e;
     outline-offset: 2px;
+    border-radius: 4px;
   }
+
+  /* Subtle branded scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(15, 118, 110, 0.25);
+    border-radius: 8px;
+    border: 2px solid #f8fafc;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(15, 118, 110, 0.45); }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -43,7 +82,7 @@
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid rgba(255, 255, 255, 0.7);
-    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
   .glass-dark {
@@ -68,20 +107,20 @@
     backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 1.25rem;
-    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     padding: 1.5rem;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s var(--ease-out-expo);
   }
 
   .card:hover {
     background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 16px 44px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-lift), inset 0 1px 0 rgba(255, 255, 255, 0.7);
     transform: translateY(-2px);
   }
 
   /* ---------- M3-style chips ---------- */
   .chip {
-    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200;
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer;
     background: rgba(255, 255, 255, 0.62);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     backdrop-filter: blur(20px) saturate(1.5);
@@ -105,6 +144,24 @@
     color: #ffffff;
   }
 
+  /* ---------- Badges ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    color: #475569;
+  }
+  .badge-teal {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(20, 184, 166, 0.14));
+    border-color: rgba(13, 148, 136, 0.25);
+    color: #0f766e;
+  }
+  .badge-guide {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.10), rgba(14, 165, 233, 0.12));
+    border-color: rgba(2, 132, 199, 0.25);
+    color: #0369a1;
+  }
+
   /* ---------- Buttons ---------- */
   .btn-primary {
     @apply bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors;
@@ -113,8 +170,8 @@
   .btn-gradient {
     background: linear-gradient(135deg, #0f766e, #14b8a6 55%, #0ea5e9);
     background-size: 160% 160%;
-    @apply text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300;
-    box-shadow: 0 6px 20px rgba(15, 118, 110, 0.35);
+    @apply text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 cursor-pointer;
+    box-shadow: var(--shadow-glow);
   }
   .btn-gradient:hover {
     background-position: 100% 50%;
@@ -123,7 +180,7 @@
   }
 
   .btn-ghost {
-    @apply px-6 py-3 rounded-xl font-medium transition-colors;
+    @apply px-6 py-3 rounded-xl font-medium transition-colors cursor-pointer;
     background: rgba(255, 255, 255, 0.62);
     -webkit-backdrop-filter: blur(20px) saturate(1.5);
     backdrop-filter: blur(20px) saturate(1.5);
@@ -146,6 +203,107 @@
   .divider-glow {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.5), transparent);
+  }
+
+  /* ---------- Section framing ---------- */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary;
+  }
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+  .section-sub {
+    @apply mt-3 text-slate-600 text-lg max-w-2xl;
+  }
+
+  /* ---------- Hero composition ---------- */
+  .mesh-bg {
+    background:
+      radial-gradient(900px 480px at 85% -10%, rgba(20, 184, 166, 0.18), transparent 60%),
+      radial-gradient(700px 420px at 0% 20%, rgba(13, 148, 136, 0.14), transparent 55%),
+      radial-gradient(600px 380px at 60% 120%, rgba(14, 165, 233, 0.10), transparent 55%);
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(48px);
+    opacity: 0.5;
+    pointer-events: none;
+    animation: orb-drift 16s var(--ease-out-expo) infinite alternate;
+  }
+
+  @keyframes orb-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to   { transform: translate3d(24px, -32px, 0) scale(1.12); }
+  }
+
+  /* Floating hero card (the ONE memorable moment) */
+  .float-slow { animation: floaty 7s var(--ease-out-expo) infinite alternate; }
+  .float-slower { animation: floaty 9s var(--ease-out-expo) infinite alternate-reverse; }
+
+  @keyframes floaty {
+    from { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+    to   { transform: translateY(-14px) rotate(var(--tilt, 0deg)); }
+  }
+
+  /* ---------- Skeleton shimmer ---------- */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.07);
+    border-radius: 0.5rem;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: shimmer 1.6s infinite;
+  }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  /* ---------- Scroll reveal (paired with framer-motion or IO) ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+  }
+  .reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---------- Live pulse dot ---------- */
+  .pulse-dot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: #14b8a6;
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    border: 2px solid rgba(20, 184, 166, 0.5);
+    animation: pulse-ring 2s var(--ease-out-expo) infinite;
+  }
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
   }
 }
 
