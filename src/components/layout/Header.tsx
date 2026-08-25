@@ -37,27 +37,27 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-primary text-white shadow-md sticky top-0 z-50">
+    <header className="sticky top-0 z-50 glass border-b border-white/60">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <Lightbulb className="w-6 h-6" />
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-slate-900">
+          <Lightbulb className="w-6 h-6 text-primary" />
           7000 Solutions
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="hover:opacity-80">Home</Link>
-          <Link href="/browse" className="hover:opacity-80">Browse</Link>
-          <Link href="/whitepaper" className="hover:opacity-80">Whitepaper</Link>
-          <Link href="/dashboard" className="hover:opacity-80">Dashboard</Link>
+          <Link href="/" className="text-slate-600 hover:text-primary transition-colors">Home</Link>
+          <Link href="/browse" className="text-slate-600 hover:text-primary transition-colors">Browse</Link>
+          <Link href="/whitepaper" className="text-slate-600 hover:text-primary transition-colors">Whitepaper</Link>
+          <Link href="/dashboard" className="text-slate-600 hover:text-primary transition-colors">Dashboard</Link>
         </nav>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
+            <MapPin className="w-4 h-4 text-slate-500" />
             <select
               value={city}
               onChange={handleCityChange}
-              className="bg-white/10 border border-white/20 rounded-md px-2 py-1 text-sm focus:outline-none"
+              className="bg-white/70 border border-slate-200 rounded-md px-2 py-1 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="Filter by city"
             >
               <option value="all" className="text-slate-900">All Cities</option>
@@ -68,7 +68,7 @@ export default function Header() {
           </div>
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 rounded-md px-3 py-1.5 text-sm"
+            className="flex items-center gap-2 bg-primary text-white hover:bg-opacity-90 rounded-md px-3 py-1.5 text-sm transition-colors"
           >
             <LayoutDashboard className="w-4 h-4" />
             Dashboard

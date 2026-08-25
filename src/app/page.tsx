@@ -40,6 +40,27 @@ export default async function HomePage() {
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
+
+          <div className="mt-14 flex flex-wrap justify-center gap-4">
+            <div className="glass-dark rounded-2xl px-6 py-3 flex items-center gap-3">
+              <TrendingUp className="w-5 h-5 text-teal-300" />
+              <span className="text-sm text-teal-50">
+                <strong className="text-white font-bold">{total.toLocaleString()}</strong> solutions
+              </span>
+            </div>
+            <div className="glass-dark rounded-2xl px-6 py-3 flex items-center gap-3">
+              <Users className="w-5 h-5 text-teal-300" />
+              <span className="text-sm text-teal-50">
+                <strong className="text-white font-bold">20+</strong> categories
+              </span>
+            </div>
+            <div className="glass-dark rounded-2xl px-6 py-3 flex items-center gap-3">
+              <Award className="w-5 h-5 text-teal-300" />
+              <span className="text-sm text-teal-50">
+                Pilot cities <strong className="text-white font-bold">Detroit & St. Louis</strong>
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
