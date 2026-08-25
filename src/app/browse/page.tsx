@@ -2,19 +2,16 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { ArrowUpDown } from 'lucide-react';
 import SearchBar from '@/components/ui/SearchBar';
 import CategoryFilter from '@/components/ui/CategoryFilter';
 import SolutionCard from '@/components/ui/SolutionCard';
 import { createClient } from '@/lib/supabase/client';
 import type { Solution } from '@/types';
 
-const CATEGORIES = [
-  'Education', 'Healthcare', 'Public Safety', 'Environment', 'Transportation',
-  'Economic Development', 'Housing', 'Digital Equity', 'Food Security', 'Youth',
-  'Aging', 'Arts & Culture',
-];
-
 const PAGE_SIZE = 50;
+
+type SortKey = 'newest' | 'sprint' | 'title';
 
 function BrowseContent() {
   const router = useRouter();
@@ -28,6 +25,7 @@ function BrowseContent() {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [city, setCity] = useState(initialCity);
+  const [sort, setSort] = useState<SortKey>('newest');
   const [solutions, setSolutions] = useState<Solution[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,14 +81,20 @@ function BrowseContent() {
       }
     }
 
-    // Keyword path
+    // Keyword path — matches title OR description
     if (query.trim()) {
-      supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
+      const q = query.trim().replace(/'/g, "''");
+      supabaseQuery = supabaseQuery.or(
+        `title.ilike.%${q}%,description.ilike.%${q}%,ai_usage.ilike.%${q}%`
+      );
     }
 
-    const { data, error: dbError } = await supabaseQuery
-      .order('created_at', { ascending: false })
-      .range(0, visibleCount - 1);
+    let ordered = supabaseQuery;
+    if (sort === 'newest') ordered = ordered.order('created_at', { ascending: false });
+    else if (sort === 'sprint') ordered = ordered.order('sprint', { ascending: true });
+    else ordered = ordered.order('title', { ascending: true });
+
+    const { data, error: dbError } = await ordered.range(0, visibleCount - 1);
 
     if (dbError) {
       setError(dbError.message);
@@ -100,7 +104,7 @@ function BrowseContent() {
     }
     setSearchMode('keyword');
     setLoading(false);
-  }, [query, category, city, supabase, visibleCount]);
+  }, [query, category, city, sort, supabase, visibleCount]);
 
   useEffect(() => {
     fetchSolutions();
@@ -130,13 +134,18 @@ function BrowseContent() {
     router.push(`/browse?${params.toString()}`);
   };
 
+  const activeFilterCount =
+    (query ? 1 : 0) + (category ? 1 : 0) + (city !== 'all' ? 1 : 0);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Browse 7,000+ Solutions</h1>
+      <h1 className="text-3xl md:text-4xl font-bold mb-2">
+        Browse <span className="text-gradient">7,000+ Solutions</span>
+      </h1>
       <p className="text-slate-500 mb-6">
         {searchMode === 'semantic'
           ? 'Semantic search — AI-ranked by meaning, not just keywords.'
-          : 'Search by keyword, category, or city.'}
+          : 'Search by keyword, category, or city — every solution includes a step-by-step build guide.'}
       </p>
 
       <div className="mb-6">
@@ -147,23 +156,50 @@ function BrowseContent() {
         <CategoryFilter selected={category} onSelect={handleCategory} />
       </div>
 
-      <div className="mb-8 flex gap-2">
-        {['all', 'Detroit', 'St. Louis'].map((c) => (
-          <button
-            key={c}
-            onClick={() => handleCity(c)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              city === c
-                ? 'bg-primary text-white'
-                : 'bg-white text-slate-700 border border-slate-300 hover:border-primary'
-            }`}
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <div className="flex gap-2">
+          {['all', 'Detroit', 'St. Louis'].map((c) => (
+            <button
+              key={c}
+              onClick={() => handleCity(c)}
+              className={`chip ${city === c ? 'chip-active' : ''}`}
+            >
+              {c === 'all' ? 'All Cities' : c}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <ArrowUpDown className="w-4 h-4 text-slate-400" />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="chip cursor-pointer appearance-none pr-8"
+            aria-label="Sort solutions"
           >
-            {c === 'all' ? 'All Cities' : c}
-          </button>
-        ))}
+            <option value="newest">Newest</option>
+            <option value="sprint">Sprint</option>
+            <option value="title">Title A–Z</option>
+          </select>
+        </div>
       </div>
 
-      {loading && <p className="text-slate-500">Loading solutions…</p>}
+      {!loading && !error && (
+        <p className="text-sm text-slate-400 mb-4">
+          {solutions.length > 0
+            ? `${solutions.length} solution${solutions.length === 1 ? '' : 's'} shown${
+                activeFilterCount > 0 ? ` · ${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}` : ''
+              }`
+            : ''}
+        </p>
+      )}
+
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card h-44 animate-pulse bg-white/40" />
+          ))}
+        </div>
+      )}
       {error && <p className="text-red-600">Error: {error}</p>}
 
       {!loading && !error && (
@@ -179,9 +215,13 @@ function BrowseContent() {
       )}
 
       {!loading && !error && solutions.length === 0 && (
-        <div className="text-center py-16 text-slate-500">
-          <p className="text-lg mb-2">No solutions found.</p>
-          <p>Try a different search, or clear filters to see everything.</p>
+        <div className="text-center py-16">
+          <div className="glass-strong rounded-2xl p-10 max-w-md mx-auto">
+            <p className="text-lg font-semibold mb-2">No solutions found.</p>
+            <p className="text-slate-500">
+              Try a different search, or clear filters to see everything.
+            </p>
+          </div>
         </div>
       )}
 
@@ -189,7 +229,7 @@ function BrowseContent() {
         <div className="mt-8 text-center">
           <button
             onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
-            className="px-6 py-3 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium hover:border-primary hover:text-primary transition-colors"
+            className="chip px-8 py-3"
           >
             Load More ({solutions.length} shown)
           </button>

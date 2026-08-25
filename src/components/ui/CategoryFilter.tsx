@@ -25,11 +25,7 @@ export default function CategoryFilter({ selected, onSelect }: CategoryFilterPro
     <div className="flex flex-wrap gap-2">
       <button
         onClick={() => onSelect('')}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-          selected === ''
-            ? 'bg-primary text-white'
-            : 'bg-white text-slate-700 border border-slate-300 hover:border-primary'
-        }`}
+        className={`chip ${selected === '' ? 'chip-active' : ''}`}
       >
         All
       </button>
@@ -37,11 +33,7 @@ export default function CategoryFilter({ selected, onSelect }: CategoryFilterPro
         <button
           key={category}
           onClick={() => onSelect(category)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            selected === category
-              ? 'bg-primary text-white'
-              : 'bg-white text-slate-700 border border-slate-300 hover:border-primary'
-          }`}
+          className={`chip ${selected === category ? 'chip-active' : ''}`}
         >
           {category}
         </button>

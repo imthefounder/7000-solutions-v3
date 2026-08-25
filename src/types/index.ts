@@ -4,10 +4,25 @@ export type Solution = {
   category: string;
   title: string;
   description: string;
+  long_description?: string | null;
   ai_usage: string | null;
   impact: string[];
   city: string | null;
   similarity?: number;
+};
+
+export type GuideStep = {
+  title: string;
+  detail: string;
+};
+
+export type SolutionGuide = {
+  solution_id: string;
+  steps: GuideStep[];
+  estimated_cost: string | null;
+  timeline: string | null;
+  partners: string[];
+  updated_at: string | null;
 };
 
 export type Profile = {
