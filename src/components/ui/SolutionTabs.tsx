@@ -4,18 +4,19 @@ import { useState } from 'react';
 
 export type TabKey = 'overview' | 'guide' | 'impact';
 
-type SolutionTabsProps = {
-  children: (active: TabKey) => React.ReactNode;
+type TabDef = {
+  key: TabKey;
+  label: string;
+  content: React.ReactNode;
 };
 
-export default function SolutionTabs({ children }: SolutionTabsProps) {
-  const [active, setActive] = useState<TabKey>('overview');
+type SolutionTabsProps = {
+  tabs: TabDef[];
+};
 
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'guide', label: 'Build Guide' },
-    { key: 'impact', label: 'Impact & Track' },
-  ];
+export default function SolutionTabs({ tabs }: SolutionTabsProps) {
+  const [active, setActive] = useState<TabKey>(tabs[0]?.key ?? 'overview');
+  const activeTab = tabs.find((t) => t.key === active) ?? tabs[0];
 
   return (
     <div>
@@ -32,7 +33,7 @@ export default function SolutionTabs({ children }: SolutionTabsProps) {
           </button>
         ))}
       </div>
-      {children(active)}
+      {activeTab?.content}
     </div>
   );
 }

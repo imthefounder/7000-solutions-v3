@@ -158,6 +158,12 @@ export default async function SolutionPage({ params }: { params: { id: string } 
     );
   };
 
+  const tabs = [
+    { key: 'overview' as TabKey, label: 'Overview', content: renderTab('overview') },
+    { key: 'guide' as TabKey, label: 'Build Guide', content: renderTab('guide') },
+    { key: 'impact' as TabKey, label: 'Impact & Track', content: renderTab('impact') },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-6 flex items-center gap-2 text-sm flex-wrap">
@@ -180,7 +186,7 @@ export default async function SolutionPage({ params }: { params: { id: string } 
       <h1 className="text-3xl md:text-4xl font-bold mb-4">{s.title}</h1>
       <p className="text-lg text-slate-600 mb-8 whitespace-pre-line">{s.description}</p>
 
-      <SolutionTabs>{renderTab}</SolutionTabs>
+      <SolutionTabs tabs={tabs} />
 
       {related.length > 0 && (
         <div className="mt-14">
