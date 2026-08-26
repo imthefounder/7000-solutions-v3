@@ -41,5 +41,6 @@ export async function GET(request: Request) {
     hasGuide: guideIds.has(r.id as string),
   }));
 
-  return NextResponse.json({ data: rows, count: count ?? rows.length, offset, limit });
+  const safeCount = typeof count === 'number' && Number.isFinite(count) ? count : rows.length;
+  return NextResponse.json({ data: rows, count: safeCount, offset, limit });
 }

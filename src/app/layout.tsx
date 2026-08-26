@@ -12,6 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://7000-solutions-v3.vercel.app'),
   title: '7000 Solutions — AI-Powered Urban Solutions Platform',
   description:
     'Browse 7,000+ AI-generated solutions to world issues. Search semantically, follow step-by-step build guides, track progress, and bring solutions to your city.',
@@ -42,6 +43,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0f766e',
 };
 
 export default function RootLayout({
@@ -52,6 +54,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-body antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: '7000 Solutions',
+              url: 'https://7000-solutions-v3.vercel.app',
+              description:
+                '7,000+ open, actionable solutions to world issues — each with a step-by-step build guide.',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://7000-solutions-v3.vercel.app/browse?q={search_term_string}',
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
         <Providers>
           <Header />
           <main className="min-h-screen">{children}</main>

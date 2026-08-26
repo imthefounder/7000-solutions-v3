@@ -29,6 +29,7 @@ export default function SearchBar({ onSearch, initialQuery = '', loading = false
             <Search className="w-5 h-5 text-slate-400 shrink-0" />
           )}
           <input
+            id="catalog-search"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

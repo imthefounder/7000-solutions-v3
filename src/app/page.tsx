@@ -19,6 +19,7 @@ import {
   Rocket,
   Users,
   Palette,
+  BookOpen,
 } from 'lucide-react';
 import { createServerSupabase } from '@/lib/supabase/server';
 import SolutionCard from '@/components/ui/SolutionCard';
@@ -107,7 +108,7 @@ export default async function HomePage() {
                 { v: '2', l: 'Pilot cities' },
                 { v: '3', l: 'Ways to engage' },
               ].map((s) => (
-                <div key={s.l} className="glass-dark rounded-2xl px-4 py-3">
+                <div key={s.l} className="rounded-2xl px-4 py-3 bg-slate-900/85 backdrop-blur-md border border-white/10 shadow-lg shadow-slate-900/15">
                   <div className="text-2xl font-bold text-white">{s.v}</div>
                   <div className="text-xs text-slate-300 mt-0.5">{s.l}</div>
                 </div>
@@ -116,7 +117,7 @@ export default async function HomePage() {
           </div>
 
           {/* Memorable moment: floating glass solution cards */}
-          <div className="relative hidden lg:block h-[520px]" aria-hidden="true">
+          <div className="relative hidden lg:block h-[520px]">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-72 h-72 rounded-full bg-gradient-to-br from-teal-500/25 to-sky-400/25 blur-2xl" />
             </div>
@@ -124,19 +125,28 @@ export default async function HomePage() {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-teal-500/10" />
 
             {featured.slice(0, 3).map((s, i) => (
-              <div
+              <Link
                 key={s.id}
-                className={`absolute glass rounded-2xl p-4 w-64 shadow-2xl float-slow ${
+                href={`/solution/${s.id}`}
+                className={`absolute glass rounded-2xl p-4 w-64 shadow-2xl float-slow group/link cursor-pointer hover:shadow-teal-900/20 ${
                   i === 0 ? 'top-8 left-8' : i === 1 ? 'top-[42%] right-0' : 'bottom-4 left-6'
                 }`}
                 style={{ animationDelay: `${i * -2}s` }}
               >
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">
-                  {s.category}
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {s.category}
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 -translate-x-1 opacity-0 transition-all duration-300 group-hover/link:translate-x-0 group-hover/link:opacity-100" />
                 </div>
-                <div className="font-semibold text-sm leading-snug line-clamp-2">{s.title}</div>
+                <div className="font-semibold text-sm leading-snug line-clamp-2 group-hover/link:text-primary transition-colors">
+                  {s.title}
+                </div>
                 <div className="text-xs text-slate-500 mt-1.5 line-clamp-2">{s.description}</div>
-              </div>
+                <div className="mt-2.5 inline-flex items-center gap-1 text-[10px] font-medium text-teal-700">
+                  <BookOpen className="w-3 h-3" /> Step-by-step guide
+                </div>
+              </Link>
             ))}
           </div>
         </div>

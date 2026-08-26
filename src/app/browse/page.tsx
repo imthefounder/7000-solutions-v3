@@ -40,7 +40,7 @@ function BrowseContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState<'keyword' | 'semantic'>('keyword');
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [hasMore, setHasMore] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
   const toSolution = (r: any): Solution => ({
@@ -55,7 +55,7 @@ function BrowseContent() {
       else setLoading(true);
       setError(null);
 
-      const from = append ? visibleCount : 0;
+      const from = append ? solutions.length : 0;
 
       let supabaseQuery = supabase
         .from('solutions')
@@ -90,6 +90,7 @@ function BrowseContent() {
                 }
                 setSolutions(filtered as unknown as Solution[]);
                 setTotal(filtered.length);
+                setHasMore(false);
                 setSearchMode('semantic');
                 setLoading(false);
                 setLoadingMore(false);
@@ -121,31 +122,49 @@ function BrowseContent() {
         guideIds = await fetchGuideIds(supabase);
       }
 
-      const { data, error: dbError, count } = await ordered.range(from, from + (append ? PAGE_SIZE : visibleCount) - 1);
+      const { data, error: dbError, count } = await ordered.range(from, from + PAGE_SIZE - 1);
 
       if (dbError) {
         setError(dbError.message);
         if (!append) setSolutions([]);
+        setHasMore(false);
       } else {
         const rows = ((data as any[]) ?? []).map((r: any) => ({
           ...toSolution(r),
           hasGuide: guideIds.has(r.id),
         }));
+        const shown = append ? solutions.length + rows.length : rows.length;
+        // PostgREST count can be NaN when the total is unknown ('*' in
+        // Content-Range) — guard everything that consumes it.
+        const safeTotal = typeof count === 'number' && Number.isFinite(count) ? count : null;
         setSolutions((prev) => (append ? [...prev, ...rows] : rows));
-        if (count !== null) setTotal(count);
+        if (safeTotal !== null) setTotal(safeTotal);
+        setHasMore(safeTotal !== null ? shown < safeTotal : rows.length === PAGE_SIZE);
       }
       setSearchMode('keyword');
       setLoading(false);
       setLoadingMore(false);
     },
-    [query, category, city, sort, supabase, visibleCount]
+    [query, category, city, sort, supabase, solutions.length]
   );
 
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
     fetchSolutions(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, category, city, sort]);
+
+  // Press "/" anywhere to focus the catalog search
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.key === '/' && t && !(t instanceof HTMLInputElement) && !(t instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        document.getElementById('catalog-search')?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleSearch = (q: string) => {
     setQuery(q);
@@ -251,7 +270,7 @@ function BrowseContent() {
 
       {!loading && !error && (
         <p className="text-sm text-slate-400 mb-4">
-          {total !== null
+          {total !== null && Number.isFinite(total)
             ? `${solutions.length} shown of ${total.toLocaleString()} solution${total === 1 ? '' : 's'}${
                 activeFilterCount > 0 ? ` · ${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}` : ''
               }`
@@ -300,18 +319,18 @@ function BrowseContent() {
         </div>
       )}
 
-      {!loading && !error && solutions.length > 0 && searchMode === 'keyword' && total !== null && solutions.length < total && (
+      {!loading && !error && solutions.length > 0 && searchMode === 'keyword' && hasMore && (
         <div className="mt-10 text-center">
           <button
-            onClick={() => {
-              setVisibleCount((v) => v + PAGE_SIZE);
-              fetchSolutions(true);
-            }}
+            onClick={() => fetchSolutions(true)}
             className="btn-ghost inline-flex items-center gap-2 cursor-pointer disabled:opacity-60"
             disabled={loadingMore}
           >
             {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
-            Load more ({solutions.length} of {total.toLocaleString()})
+            Load more
+            {total !== null && Number.isFinite(total)
+              ? ` (${solutions.length} of ${total.toLocaleString()})`
+              : ` (${solutions.length}+)`}
           </button>
         </div>
       )}

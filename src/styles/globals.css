@@ -241,12 +241,27 @@
   /* Floating hero card (the ONE memorable moment) — translateY ONLY,
      same duration + ease for all cards so they never cross/jump.
      Never combine with transform utilities (animation overrides them). */
-  .float-slow { animation: floaty 6s ease-in-out infinite; }
-  .float-slower { animation: floaty 6s ease-in-out infinite; animation-delay: -3s; }
+  .float-slow { animation: floaty 6s ease-in-out infinite; will-change: transform; }
+  .float-slower { animation: floaty 6s ease-in-out infinite; animation-delay: -3s; will-change: transform; }
 
   @keyframes floaty {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-12px); }
+  }
+
+  /* Hero float cards: strip backdrop-filter — animating transform while a
+     backdrop blur is active forces a full re-composite every frame, which
+     reads as jitter/flicker on Windows GPUs. Solid translucent bg looks
+     identical over the blurred orbs. */
+  .float-slow.glass,
+  .float-slower.glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb, .float-slow, .float-slower { animation: none; }
   }
 
   /* ---------- Skeleton shimmer ---------- */
