@@ -33,7 +33,10 @@ export async function GET(request: Request) {
   }
 
   // Guide-ready flags (two-query pattern — embed syntax is unreliable here)
-  const { data: guideRows } = await supabase.from('solution_guides').select('solution_id');
+  const { data: guideRows } = await supabase
+    .from('solution_guides')
+    .select('solution_id')
+    .limit(10000);
   const guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
 
   const rows = (data ?? []).map((r: Record<string, unknown>) => ({

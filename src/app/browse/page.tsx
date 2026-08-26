@@ -117,7 +117,10 @@ function BrowseContent() {
       // Guide-ready flags — two-query pattern (embed syntax is unreliable)
       let guideIds = new Set<string>();
       if (!append) {
-        const { data: guideRows } = await supabase.from('solution_guides').select('solution_id');
+        const { data: guideRows } = await supabase
+          .from('solution_guides')
+          .select('solution_id')
+          .limit(10000);
         guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
       }
 
