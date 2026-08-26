@@ -41,3 +41,4 @@ next-env.d.ts
 # python
 __pycache__/
 *.pyc
+.tmp_check/
