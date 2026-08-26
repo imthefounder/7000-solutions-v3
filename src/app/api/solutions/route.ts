@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { fetchGuideIds } from '@/lib/guideIds';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,12 +33,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Guide-ready flags (two-query pattern — embed syntax is unreliable here)
-  const { data: guideRows } = await supabase
-    .from('solution_guides')
-    .select('solution_id')
-    .limit(10000);
-  const guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
+  // Guide-ready flags (paginated — Supabase caps at 1,000 rows/request)
+  const guideIds = await fetchGuideIds(supabase);
 
   const rows = (data ?? []).map((r: Record<string, unknown>) => ({
     ...r,

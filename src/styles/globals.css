@@ -238,13 +238,15 @@
     to   { transform: translate3d(24px, -32px, 0) scale(1.12); }
   }
 
-  /* Floating hero card (the ONE memorable moment) */
-  .float-slow { animation: floaty 7s var(--ease-out-expo) infinite alternate; }
-  .float-slower { animation: floaty 9s var(--ease-out-expo) infinite alternate-reverse; }
+  /* Floating hero card (the ONE memorable moment) — translateY ONLY,
+     same duration + ease for all cards so they never cross/jump.
+     Never combine with transform utilities (animation overrides them). */
+  .float-slow { animation: floaty 6s ease-in-out infinite; }
+  .float-slower { animation: floaty 6s ease-in-out infinite; animation-delay: -3s; }
 
   @keyframes floaty {
-    from { transform: translateY(0) rotate(var(--tilt, 0deg)); }
-    to   { transform: translateY(-14px) rotate(var(--tilt, 0deg)); }
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
   }
 
   /* ---------- Skeleton shimmer ---------- */

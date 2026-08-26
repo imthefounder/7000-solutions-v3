@@ -35,7 +35,7 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
           </div>
           <div className="min-w-0">
             <p className="text-xs text-slate-500">Timeline</p>
-            <p className="font-medium text-sm truncate">{guide.timeline ?? 'Not yet estimated'}</p>
+            <p className="font-medium text-sm text-slate-700 leading-snug">{guide.timeline ?? 'Not yet estimated'}</p>
           </div>
         </div>
         <div className="card !p-4 flex items-center gap-3">
@@ -44,7 +44,7 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
           </div>
           <div className="min-w-0">
             <p className="text-xs text-slate-500">Estimated Cost</p>
-            <p className="font-medium text-sm truncate">{guide.estimated_cost ?? 'Not yet estimated'}</p>
+            <p className="font-medium text-sm text-slate-700 leading-snug">{guide.estimated_cost ?? 'Not yet estimated'}</p>
           </div>
         </div>
         <div className="card !p-4 flex items-center gap-3">
@@ -53,9 +53,9 @@ function GuideSection({ guide }: { guide: SolutionGuide | null }) {
           </div>
           <div className="min-w-0">
             <p className="text-xs text-slate-500">Key Partners</p>
-            <p className="font-medium text-sm truncate">
+            <p className="font-medium text-sm text-slate-700 leading-snug">
               {guide.partners && guide.partners.length > 0
-                ? `${guide.partners.length} partner${guide.partners.length === 1 ? '' : 's'}`
+                ? `${guide.partners.slice(0, 2).join(', ')}${guide.partners.length > 2 ? ` +${guide.partners.length - 2} more` : ''}`
                 : 'Community-led'}
             </p>
           </div>

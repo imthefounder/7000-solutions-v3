@@ -126,8 +126,10 @@ export default async function HomePage() {
             {featured.slice(0, 3).map((s, i) => (
               <div
                 key={s.id}
-                className={`absolute glass rounded-2xl p-4 w-64 shadow-2xl ${i === 0 ? 'float-slow top-8 left-1/2 -translate-x-[70%]' : i === 1 ? 'float-slower top-1/2 -translate-y-1/2 right-0' : 'float-slow bottom-4 left-6'}`}
-                style={{ ['--tilt' as string]: `${(i - 1) * 2.5}deg`, animationDelay: `${i * -2}s` }}
+                className={`absolute glass rounded-2xl p-4 w-64 shadow-2xl float-slow ${
+                  i === 0 ? 'top-8 left-8' : i === 1 ? 'top-[42%] right-0' : 'bottom-4 left-6'
+                }`}
+                style={{ animationDelay: `${i * -2}s` }}
               >
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">
                   {s.category}

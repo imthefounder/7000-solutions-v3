@@ -8,6 +8,7 @@ import CategoryFilter from '@/components/ui/CategoryFilter';
 import SolutionCard from '@/components/ui/SolutionCard';
 import SolutionCardSkeleton from '@/components/ui/SolutionCardSkeleton';
 import { createClient } from '@/lib/supabase/client';
+import { fetchGuideIds } from '@/lib/guideIds';
 import type { Solution } from '@/types';
 
 const PAGE_SIZE = 50;
@@ -114,14 +115,10 @@ function BrowseContent() {
       else if (sort === 'sprint') ordered = ordered.order('sprint', { ascending: true });
       else ordered = ordered.order('title', { ascending: true });
 
-      // Guide-ready flags — two-query pattern (embed syntax is unreliable)
+      // Guide-ready flags — paginated (Supabase caps at 1,000 rows/request)
       let guideIds = new Set<string>();
       if (!append) {
-        const { data: guideRows } = await supabase
-          .from('solution_guides')
-          .select('solution_id')
-          .limit(10000);
-        guideIds = new Set((guideRows ?? []).map((g: { solution_id: string }) => g.solution_id));
+        guideIds = await fetchGuideIds(supabase);
       }
 
       const { data, error: dbError, count } = await ordered.range(from, from + (append ? PAGE_SIZE : visibleCount) - 1);
